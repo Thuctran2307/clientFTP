@@ -8,20 +8,33 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Client {
+    public static Client instance;
     private FTPClient ftpClient;
     private String server;
     private int port;
     private String user;
     private String pass;
 
-    public Client(String server, int port, String user, String pass) {
+    private Client(String server, int port, String user, String pass) {
         this.server = server;
         this.port = port;
         this.user = user;
         this.pass = pass;
         this.ftpClient = new FTPClient();
+    }
+
+    public static Client getInstance(String server, int port, String user, String pass) {
+        if (instance == null) {
+            instance = new Client(server, port, user, pass);
+        }
+        return instance;
+    }
+
+    public static Client getInstance() {
+        return instance;
     }
 
     public void connect() throws IOException {
@@ -35,22 +48,12 @@ public class Client {
         ftpClient.disconnect();
     }
 
-    public ArrayList<String> listFiles(String path) throws IOException {
-        ArrayList<String> list = new ArrayList<String>();
-        FTPFile[] files = ftpClient.listFiles(path);
-        for (FTPFile file : files) {
-            list.add(file.getName());
-        }
-        return list;
+    public ArrayList<FTPFile> listFiles(String path) throws IOException {
+        return  new ArrayList<FTPFile>(Arrays.asList(ftpClient.listFiles(path)));
     }
 
-    public ArrayList<String> listFolders(String path) throws IOException {
-        ArrayList<String> list = new ArrayList<String>();
-        FTPFile[] files = ftpClient.listDirectories(path);
-        for (FTPFile file : files) {
-            list.add(file.getName());
-        }
-        return list;
+    public ArrayList<FTPFile> listFolders(String path) throws IOException {
+        return  new ArrayList<FTPFile>(Arrays.asList(ftpClient.listDirectories(path)));
     }
 
     public void uploadFile(String localFilePath, String remoteFilePath) throws IOException {
