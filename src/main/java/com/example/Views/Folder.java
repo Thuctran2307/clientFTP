@@ -20,7 +20,7 @@ public class Folder extends JPanel {
 
         // Resize hình ảnh
         Image img = originalIcon.getImage();
-        Image resizedImage = img.getScaledInstance(50, 50, Image.SCALE_SMOOTH); // Đặt kích thước mới ở đây (ở đây là 50x50)
+        Image resizedImage = img.getScaledInstance(50, 50, Image.SCALE_SMOOTH); 
         ImageIcon resizedIcon = new ImageIcon(resizedImage);
 
         // Đặt biểu tượng đã thay đổi kích thước vào JLabel

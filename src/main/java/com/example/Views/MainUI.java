@@ -4,23 +4,26 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.tree.TreePath;
+
 import org.apache.commons.net.ftp.FTPFile;
+import java.awt.event.*;
 
 import com.example.Client;
+import com.example.DirectoryNode;
 
 public class MainUI extends JFrame {
 
@@ -46,12 +49,12 @@ public class MainUI extends JFrame {
 
     JTextArea txtStatus;
     JScrollPane scrollPane;
-    
+
     public static MainUI getInstance() {
         if (instance == null) {
             instance = new MainUI();
         }
-        return instance;        
+        return instance;
     }
 
     private MainUI() {
@@ -59,7 +62,7 @@ public class MainUI extends JFrame {
         initEvent();
     }
 
-    void initUI(){
+    void initUI() {
         Dimension headerSize = new Dimension(1080, 25);
         Dimension statusSize = new Dimension(1080, 150);
         Dimension remoteSize = new Dimension(1080, 800 - headerSize.height - statusSize.height);
@@ -113,7 +116,7 @@ public class MainUI extends JFrame {
         statusPanel.setPreferredSize(statusSize);
 
         // Tạo remotePanel
-        
+
         remotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         remotePanel.setPreferredSize(remoteSize);
 
@@ -121,11 +124,11 @@ public class MainUI extends JFrame {
         this.add(headerPanel, BorderLayout.NORTH);
         this.add(statusPanel, BorderLayout.CENTER);
         this.add(remotePanel, BorderLayout.SOUTH);
-        
+
         this.setVisible(true);
     }
 
-    void initEvent(){
+    void initEvent() {
 
         remotePanel.setComponentPopupMenu(new PopUpMenu("", "", 3));
 
@@ -150,44 +153,91 @@ public class MainUI extends JFrame {
         });
     }
 
-    public void updateStatus(String status){
+    public void updateStatus(String status) {
         txtStatus.append(status + "\n");
     }
 
-    public void updateRemotePanel(String path) throws IOException{
+    public void updateRemotePanel(String path) throws IOException {
 
         remotePanel.removeAll();
-        Folder folderPanel = null;
+        ArrayList<DirectoryNode> queue = new ArrayList<>();
+        DirectoryNode root = new DirectoryNode(path, "E:\\", "2020-12-12");
+        queue.add(root);
 
-        for(FTPFile folder : client.listFiles(path)){
-            JPopupMenu popupMenu;
-            if(folder.isDirectory()){
-                folderPanel = new Folder(folder.getName(), false);
-                folderPanel.setPreferredSize(new Dimension(120, 80));
-                popupMenu = new PopUpMenu(folderPanel.FolderName.getText(), path, 2);
-            }else{
-                folderPanel = new Folder(folder.getName(), true);
-                folderPanel.setPreferredSize(new Dimension(100, 80));
-                popupMenu = new PopUpMenu(folderPanel.FolderName.getText(), path, 1);
+        while (!queue.isEmpty()) {
+            DirectoryNode node = queue.remove(0);
+            for (FTPFile file : client.listFiles(node.getUserObject().toString())) {
+                DirectoryNode child = new DirectoryNode(file.getName(), file.getType() + "",
+                        file.getTimestamp().getTime().toString());
+                node.add(child);
+                if (file.isDirectory()) {
+                    queue.add(child);
+                }
             }
-            folderPanel.setComponentPopupMenu(popupMenu);
-            folderPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(java.awt.event.MouseEvent evt) {
-                    if(evt.getClickCount() == 2){
-                        try {
-                            updateRemotePanel(path + folder.getName() + "/");
-                            updateStatus("Listed files in " + path + folder.getName() + "/");
-                            txtPath.setText(txtPath.getText() + folder.getName() + "/");
-                        } catch (IOException e) {
-                            e.printStackTrace();
+        }
+        JTree tree = new JTree(root);
+        tree.addMouseListener(new MouseAdapter() {
+            // create right click event show popup menu
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+                    tree.setSelectionPath(path);
+                    PopUpMenu popupMenu = null;
+                    if (path != null) {
+
+                        DirectoryNode node = (DirectoryNode) path.getLastPathComponent();
+
+                        String a = getPath(path.toString());
+                        if (Integer.parseInt(node.getFileType()) == 0) {
+                            popupMenu = new PopUpMenu(node.getUserObject().toString(), a, 0);
+                        } else {
+                            popupMenu = new PopUpMenu(node.getUserObject().toString(), a, 1);
                         }
                     }
+                    tree.setComponentPopupMenu(popupMenu);
                 }
-            });
-            remotePanel.add(folderPanel);
-        }
+            }
+        });
+        JScrollPane scrollPane = new JScrollPane(tree);
+        remotePanel.add(scrollPane);
+
+        // for(FTPFile folder : client.listFiles(path)){
+
+        // PopUpMenu popupMenu;
+        // if(folder.isDirectory()){
+        // folderPanel = new Folder(folder.getName(), false);
+        // folderPanel.setPreferredSize(new Dimension(120, 80));
+        // popupMenu = new PopUpMenu(folderPanel.FolderName.getText(), path, 2);
+        // }else{
+        // folderPanel = new Folder(folder.getName(), true);
+        // folderPanel.setPreferredSize(new Dimension(100, 80));
+        // popupMenu = new PopUpMenu(folderPanel.FolderName.getText(), path, 1);
+        // }
+        // folderPanel.setComponentPopupMenu(popupMenu);
+        // folderPanel.addMouseListener(new MouseAdapter() {
+        // @Override
+        // public void mouseClicked(java.awt.event.MouseEvent evt) {
+        // if(evt.getClickCount() == 2){
+        // try {
+        // updateRemotePanel(path + folder.getName() + "/");
+        // updateStatus("Listed files in " + path + folder.getName() + "/");
+        // txtPath.setText(txtPath.getText() + folder.getName() + "/");
+        // } catch (IOException e) {
+        // e.printStackTrace();
+        // }
+        // }
+        // }
+        // });
+        // remotePanel.add(folderPanel);
+        // }
         remotePanel.revalidate();
         remotePanel.repaint();
+    }
+
+    String getPath(String path) {
+        String str = path;
+        String result = str.replaceAll("[\\[\\]]", "");
+        String[] array = result.split(", ");
+        return String.join("\\", array);
     }
 }
