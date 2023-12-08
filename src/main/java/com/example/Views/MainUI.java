@@ -1,12 +1,15 @@
 package com.example.Views;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -17,22 +20,28 @@ import javax.swing.JTextField;
 
 import javax.swing.JTree;
 import javax.swing.SwingUtilities;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
 import org.apache.commons.net.ftp.FTPFile;
 import java.awt.event.*;
 
 import com.example.Client;
-import com.example.DirectoryNode;
 
 public class MainUI extends JFrame {
 
     public static MainUI instance;
-    Client client;
-    JPanel menuPanel;
+    public Client client;
+
     JPanel remotePanel;
+    JPanel localPanel;
+    JPanel mainPanel;
     JPanel headerPanel;
     JPanel statusPanel;
+    JPanel detailsPanel;
+
+    JTree localTree;
+    JTree remoteTree;
 
     JLabel lbHost;
     JLabel lbPort;
@@ -48,7 +57,12 @@ public class MainUI extends JFrame {
     JButton btnBack;
 
     JTextArea txtStatus;
-    JScrollPane scrollPane;
+    JScrollPane scrollPaneStatus;
+
+    Dimension headerSize = new Dimension(1080, 40);
+    Dimension statusSize = new Dimension(1050, 120);
+    Dimension remoteSize = new Dimension(540, 800 - headerSize.height - statusSize.height - 100);
+    Dimension detailsSize = new Dimension(1050, 900 - headerSize.height - statusSize.height - remoteSize.height - 10);
 
     public static MainUI getInstance() {
         if (instance == null) {
@@ -63,18 +77,16 @@ public class MainUI extends JFrame {
     }
 
     void initUI() {
-        Dimension headerSize = new Dimension(1080, 25);
-        Dimension statusSize = new Dimension(1080, 150);
-        Dimension remoteSize = new Dimension(1080, 800 - headerSize.height - statusSize.height);
 
         this.setTitle("Main UI");
-        this.setSize(1080, 800);
+        this.setSize(1080, 900);
+        this.setResizable(false);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
-        this.setLayout(new BorderLayout()); // Sử dụng BorderLayout cho frame chính
+        this.setLayout(new FlowLayout()); // Sử dụng BorderLayout cho frame chính
 
         // Tạo headerPanel
-        headerPanel = new JPanel(new GridLayout(1, 11)); // GridLayout với 2 hàng, 5 cột
+        headerPanel = new JPanel(new FlowLayout());
         lbHost = new JLabel("Host");
         txtHost = new JTextField(10);
 
@@ -98,40 +110,42 @@ public class MainUI extends JFrame {
         headerPanel.add(btnConnect);
         headerPanel.setPreferredSize(headerSize);
 
-        // menupanel
-        menuPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        txtPath = new JTextField(40);
-        btnGo = new JButton("Go");
-        btnBack = new JButton("Back");
-        menuPanel.add(txtPath);
-        menuPanel.add(btnBack);
-        menuPanel.add(btnGo);
-
         // Tạo statusPanel và scrollPane
         statusPanel = new JPanel(new BorderLayout()); // Sử dụng BorderLayout cho statusPanel
-        txtStatus = new JTextArea(30, 80);
-        scrollPane = new JScrollPane(txtStatus);
-        statusPanel.add(scrollPane, BorderLayout.CENTER);
-        statusPanel.add(menuPanel, BorderLayout.SOUTH);
+        txtStatus = new JTextArea(10, 80);
+        scrollPaneStatus = new JScrollPane(txtStatus);
         statusPanel.setPreferredSize(statusSize);
+        scrollPaneStatus.setPreferredSize(statusSize);
+        statusPanel.add(scrollPaneStatus, BorderLayout.CENTER);
 
         // Tạo remotePanel
+        mainPanel = new JPanel(new GridLayout(1, 2));
 
         remotePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         remotePanel.setPreferredSize(remoteSize);
 
+        localPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        localPanel.setPreferredSize(remoteSize);
+
+        mainPanel.add(remotePanel);
+        mainPanel.add(localPanel);
+
         // Đặt các panel vào vị trí cụ thể trong BorderLayout của frame chính
-        this.add(headerPanel, BorderLayout.NORTH);
-        this.add(statusPanel, BorderLayout.CENTER);
-        this.add(remotePanel, BorderLayout.SOUTH);
+        this.add(headerPanel);
+        this.add(statusPanel);
+        this.add(mainPanel);
+
+        updateLocalPanel();
+
+        // detile pannel
+        detailsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        detailsPanel.setPreferredSize(detailsSize);
+        this.add(detailsPanel);
 
         this.setVisible(true);
     }
 
     void initEvent() {
-
-        remotePanel.setComponentPopupMenu(new PopUpMenu("", "", 3));
-
         btnConnect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -140,12 +154,13 @@ public class MainUI extends JFrame {
                 String user = txtUser.getText();
                 String pass = txtPass.getText();
 
-                client = Client.getInstance(host, Integer.parseInt(port), user, pass);
+                client = new Client(host, Integer.parseInt(port), user, pass);
                 try {
                     client.connect();
                     updateStatus("Connected to server...");
-                    updateRemotePanel("");
+                    updateRemotePanel();
                     updateStatus("Listed files in root directory...");
+                    localTree.updateUI();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -157,81 +172,125 @@ public class MainUI extends JFrame {
         txtStatus.append(status + "\n");
     }
 
-    public void updateRemotePanel(String path) throws IOException {
-
-        remotePanel.removeAll();
-        ArrayList<DirectoryNode> queue = new ArrayList<>();
-        DirectoryNode root = new DirectoryNode(path, "E:\\", "2020-12-12");
-        queue.add(root);
-
-        while (!queue.isEmpty()) {
-            DirectoryNode node = queue.remove(0);
-            for (FTPFile file : client.listFiles(node.getUserObject().toString())) {
-                DirectoryNode child = new DirectoryNode(file.getName(), file.getType() + "",
-                        file.getTimestamp().getTime().toString());
-                node.add(child);
-                if (file.isDirectory()) {
-                    queue.add(child);
-                }
+    private void addFilesToNode(File directory, DefaultMutableTreeNode parentNode) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                SystemFileNode childNode = new SystemFileNode(file);
+                parentNode.add(childNode);
             }
         }
-        JTree tree = new JTree(root);
-        tree.addMouseListener(new MouseAdapter() {
+    }
+
+    private void addFilesToNode(DefaultMutableTreeNode root, String filePath) {
+
+        String path = filePath + "\\" + root.getUserObject().toString();
+        try {
+            for (FTPFile file : client.listFiles(path)) {
+
+                FTPFileNode child = new FTPFileNode(file);
+
+                root.add(child);
+
+                if (file.isDirectory()) {
+                    addFilesToNode(child, path);
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateRemotePanel() throws IOException {
+
+        remotePanel.removeAll();
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("");
+        addFilesToNode(root, "");
+
+        remoteTree = new JTree(root);
+        remoteTree.setCellRenderer(new CustomTree());
+        remoteTree.addMouseListener(new MouseAdapter() {
             // create right click event show popup menu
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    TreePath path = tree.getPathForLocation(e.getX(), e.getY());
-                    tree.setSelectionPath(path);
+                    TreePath path = remoteTree.getPathForLocation(e.getX(), e.getY());
+                    remoteTree.setSelectionPath(path);
                     PopUpMenu popupMenu = null;
                     if (path != null) {
 
-                        DirectoryNode node = (DirectoryNode) path.getLastPathComponent();
+                        FTPFileNode node = (FTPFileNode) path.getLastPathComponent();
 
                         String a = getPath(path.toString());
-                        if (Integer.parseInt(node.getFileType()) == 0) {
-                            popupMenu = new PopUpMenu(node.getUserObject().toString(), a, 0);
-                        } else {
-                            popupMenu = new PopUpMenu(node.getUserObject().toString(), a, 1);
+                        if (node.getFTPFile().isFile()) {
+                            popupMenu = new PopUpMenu(node, a, "REMOTE", 0);
+                        } else if (node.getFTPFile().isDirectory()) {
+                            popupMenu = new PopUpMenu(node, a, "REMOTE", 1);
                         }
+                    } else {
+                        popupMenu = new PopUpMenu(null, "", "REMOTE", 3);
                     }
-                    tree.setComponentPopupMenu(popupMenu);
+                    remoteTree.setComponentPopupMenu(popupMenu);
                 }
             }
         });
-        JScrollPane scrollPane = new JScrollPane(tree);
+        JScrollPane scrollPane = new JScrollPane(remoteTree);
+        scrollPane.setPreferredSize(remoteSize);
         remotePanel.add(scrollPane);
 
-        // for(FTPFile folder : client.listFiles(path)){
-
-        // PopUpMenu popupMenu;
-        // if(folder.isDirectory()){
-        // folderPanel = new Folder(folder.getName(), false);
-        // folderPanel.setPreferredSize(new Dimension(120, 80));
-        // popupMenu = new PopUpMenu(folderPanel.FolderName.getText(), path, 2);
-        // }else{
-        // folderPanel = new Folder(folder.getName(), true);
-        // folderPanel.setPreferredSize(new Dimension(100, 80));
-        // popupMenu = new PopUpMenu(folderPanel.FolderName.getText(), path, 1);
-        // }
-        // folderPanel.setComponentPopupMenu(popupMenu);
-        // folderPanel.addMouseListener(new MouseAdapter() {
-        // @Override
-        // public void mouseClicked(java.awt.event.MouseEvent evt) {
-        // if(evt.getClickCount() == 2){
-        // try {
-        // updateRemotePanel(path + folder.getName() + "/");
-        // updateStatus("Listed files in " + path + folder.getName() + "/");
-        // txtPath.setText(txtPath.getText() + folder.getName() + "/");
-        // } catch (IOException e) {
-        // e.printStackTrace();
-        // }
-        // }
-        // }
-        // });
-        // remotePanel.add(folderPanel);
-        // }
         remotePanel.revalidate();
         remotePanel.repaint();
+    }
+
+    public void updateLocalPanel() {
+        localPanel.removeAll();
+        DefaultMutableTreeNode rootLocal = new DefaultMutableTreeNode();
+        File[] roots = File.listRoots();
+
+        // Duyệt và in ra tên của mỗi ổ đĩa
+        for (File root : roots) {
+            rootLocal.add(new DefaultMutableTreeNode(root.getAbsolutePath()));
+        }
+
+        localTree = new JTree(rootLocal);
+
+        // Thêm JTree vào JScrollPane để hỗ trợ cuộn
+        JScrollPane localScrollPane = new JScrollPane(localTree);
+        localTree.setCellRenderer(new CustomTree());
+        localScrollPane.setPreferredSize(remoteSize);
+        // Thêm JScrollPane vào localPanel
+        localPanel.add(localScrollPane, BorderLayout.CENTER);
+        localTree.addMouseListener(new MouseAdapter() {
+            // create right click event show popup menu
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    TreePath path = localTree.getPathForLocation(e.getX(), e.getY());
+                    localTree.setSelectionPath(path);
+                    PopUpMenu popupMenu = null;
+                    if (path != null) {
+
+                        SystemFileNode node = (SystemFileNode) path.getLastPathComponent();
+
+                        if (node.getFile().isFile()) {
+                            popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 0);
+                        } else if (node.getFile().isDirectory()) {
+                            popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 1);
+                        }
+                    } else {
+                        popupMenu = new PopUpMenu(null, "", "LOCAL", 3);
+                    }
+                    localTree.setComponentPopupMenu(popupMenu);
+                } else if (e.getClickCount() == 2) {
+                    TreePath path = localTree.getPathForLocation(e.getX(), e.getY());
+
+                    if (path != null) {
+                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+                        File rootFile = new File(getPath(path.toString()));
+                        addFilesToNode(rootFile, node);
+                    }
+                }
+            }
+        });
     }
 
     String getPath(String path) {
@@ -240,4 +299,27 @@ public class MainUI extends JFrame {
         String[] array = result.split(", ");
         return String.join("\\", array);
     }
+
+    public void updateDetailsPanel(String Name, String path, String lastModified, String type, String size) throws IOException {
+        detailsPanel.removeAll();
+        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.X_AXIS));
+    
+        addLabelToPanel("<html><font color='blue'>Name:</font> " + Name + "</html>", detailsPanel);
+        addLabelToPanel("<html><font color='green'>Path:</font> " + path + "</html>", detailsPanel);
+        addLabelToPanel("<html><font color='red'>Last Modified:</font> " + lastModified + "</html>", detailsPanel);
+        addLabelToPanel("<html><font color='orange'>Type:</font> " + type + "</html>", detailsPanel);
+        addLabelToPanel("<html><font color='purple'>Size:</font> " + size + "B" + "</html>", detailsPanel);
+    
+        detailsPanel.revalidate();
+        detailsPanel.repaint();
+    }
+    
+    private void addLabelToPanel(String labelText, JPanel panel) {
+        JLabel label = new JLabel(labelText);
+        label.setAlignmentY(Component.TOP_ALIGNMENT);
+        panel.add(label);
+        panel.add(Box.createRigidArea(new Dimension(30, 0))); // Khoảng cách giữa các nhãn
+    }
+    
+
 }

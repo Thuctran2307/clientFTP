@@ -11,14 +11,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Client {
-    public static Client instance;
     private FTPClient ftpClient;
     private String server;
     private int port;
     private String user;
     private String pass;
 
-    private Client(String server, int port, String user, String pass) {
+    public Client(String server, int port, String user, String pass) {
         this.server = server;
         this.port = port;
         this.user = user;
@@ -26,22 +25,12 @@ public class Client {
         this.ftpClient = new FTPClient();
     }
 
-    public static Client getInstance(String server, int port, String user, String pass) {
-        if (instance == null) {
-            instance = new Client(server, port, user, pass);
-        }
-        return instance;
-    }
-
-    public static Client getInstance() {
-        return instance;
-    }
-
-    public void connect() throws IOException {
+    public void  connect() throws IOException {
         ftpClient.connect(server, port);
         ftpClient.login(user, pass);
         ftpClient.enterLocalPassiveMode();
         ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+        ftpClient.setFileType(FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE);
     }
 
     public void disconnect() throws IOException {
@@ -96,11 +85,8 @@ public class Client {
         ftpClient.rename(from, to);
     }
 
-    public void copyFile(String from, String to) throws IOException {
-        ftpClient.rename(from, to);
-    }
-
-    public void copyFolder(String from, String to) throws IOException {
-        ftpClient.rename(from, to);
+    // get directory of current working directory
+    public String getWorkingDirectory() throws IOException {
+        return ftpClient.printWorkingDirectory();
     }
 }
