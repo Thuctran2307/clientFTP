@@ -59,6 +59,8 @@ public class MainUI extends JFrame {
     JTextArea txtStatus;
     JScrollPane scrollPaneStatus;
 
+    public ProgressBar progressBar = null;
+
     Dimension headerSize = new Dimension(1080, 40);
     Dimension statusSize = new Dimension(1050, 120);
     Dimension remoteSize = new Dimension(540, 800 - headerSize.height - statusSize.height - 100);
@@ -312,6 +314,18 @@ public class MainUI extends JFrame {
     
         detailsPanel.revalidate();
         detailsPanel.repaint();
+    }
+
+    public void addProgressBar() {
+        detailsPanel.removeAll();
+        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.X_AXIS));
+        detailsPanel.add(progressBar);
+        detailsPanel.revalidate();
+        detailsPanel.repaint();
+    }
+
+    public void updateProgress() {
+        
     }
     
     private void addLabelToPanel(String labelText, JPanel panel) {

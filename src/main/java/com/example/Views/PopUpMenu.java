@@ -4,10 +4,13 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.example.FileHandler;
 
 public class PopUpMenu extends JPopupMenu {
+    private final ExecutorService executor = Executors.newFixedThreadPool(1); // Số lượng luồng
     JMenuItem download, rename, delete, upload, createFolder, detail;
 
     public PopUpMenu(DefaultMutableTreeNode FolderNode, String pathCurrently, String type, int check) {
@@ -27,12 +30,31 @@ public class PopUpMenu extends JPopupMenu {
                 download.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         try {
-                            System.out.println(pathCurrently);
-                            MainUI.getInstance().client.downloadFile("D:\\" + FolderNode.getUserObject().toString(),
-                                    pathCurrently);
-                            MainUI.getInstance().updateStatus("Download successfully, file saved in: " + "D:\\"
-                                    + FolderNode.getUserObject().toString());
-                            MainUI.getInstance().updateLocalPanel();
+                            executor.submit(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        String size = ((FTPFileNode) FolderNode).getFTPFile().getSize() + "";
+                                        MainUI.getInstance().progressBar = new ProgressBar(
+                                                FolderNode.getUserObject().toString(), "Download", size);
+                                        MainUI.getInstance().client.downloadFile(
+                                                "D:\\" + FolderNode.getUserObject().toString(),
+                                                pathCurrently);
+                                        MainUI.getInstance()
+                                                .updateStatus("Download successfully, file saved in: " + "D:\\"
+                                                        + FolderNode.getUserObject().toString());
+                                        
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                            executor.shutdown();
+                            // MainUI.getInstance().client.downloadFile("D:\\" + FolderNode.getUserObject().toString(),
+                            //         pathCurrently);
+                            // MainUI.getInstance().updateStatus("Download successfully, file saved in: " + "D:\\"
+                            //         + FolderNode.getUserObject().toString());
+                            // MainUI.getInstance().updateLocalPanel();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -63,8 +85,7 @@ public class PopUpMenu extends JPopupMenu {
                         }
                     }
                 });
-            }
-            else{
+            } else {
                 this.add(upload);
                 this.add(rename);
                 this.add(delete);
@@ -72,10 +93,24 @@ public class PopUpMenu extends JPopupMenu {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         String pathToSave = JOptionPane.showInputDialog("Enter path to upload: ");
                         try {
-                            
-                            MainUI.getInstance().client.uploadFile(pathCurrently , pathToSave + "\\" + FolderNode.getUserObject().toString());
-                            MainUI.getInstance().updateStatus("Upload successfully to " + pathToSave + "\\" + FolderNode.getUserObject().toString());
-                            MainUI.getInstance().updateRemotePanel();
+                            executor.submit(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        String size = ((SystemFileNode) FolderNode).getFile().length() + "";
+                                        MainUI.getInstance().progressBar = new ProgressBar(
+                                                FolderNode.getUserObject().toString(), "Upload", size);
+                                        MainUI.getInstance().client.uploadFile(pathCurrently,
+                                                pathToSave + "\\" + FolderNode.getUserObject().toString());
+                                        MainUI.getInstance().updateStatus("Upload successfully to " + pathToSave + "\\"
+                                                + FolderNode.getUserObject().toString());
+                                        MainUI.getInstance().updateRemotePanel();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                            executor.shutdown();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -87,7 +122,8 @@ public class PopUpMenu extends JPopupMenu {
                         String newName = JOptionPane.showInputDialog("Enter new name: ");
                         try {
                             System.out.println(pathCurrently);
-                            FileHandler.getInstance().renameFile(pathCurrently, newName, FolderNode.getUserObject().toString());
+                            FileHandler.getInstance().renameFile(pathCurrently, newName,
+                                    FolderNode.getUserObject().toString());
                             MainUI.getInstance().updateLocalPanel();
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -98,13 +134,47 @@ public class PopUpMenu extends JPopupMenu {
                 delete.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         try {
-                            // FileHandler.getInstance().deleteFolder(MainUI.getInstance().client pathCurrently);
+                            // FileHandler.getInstance().deleteFolder(MainUI.getInstance().client
+                            // pathCurrently);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                 });
             }
+            this.add(detail);
+            detail.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    try {
+                        if (type == "REMOTE") {
+                            FTPFileNode node = (FTPFileNode) FolderNode;
+
+                            String nameFile = node.getFTPFile().getName();
+                            String sizeFile = node.getFTPFile().getSize() + "";
+                            String pathFile = pathCurrently;
+                            String typeFile = node.getFTPFile().getType() == 0 ? "File" : "Folder";
+                            String lastModified = node.getFTPFile().getTimestamp().getTime() + "";
+
+                            MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile,
+                                    sizeFile);
+
+                        } else {
+                            SystemFileNode node = (SystemFileNode) FolderNode;
+
+                            String nameFile = node.getFile().getName();
+                            String sizeFile = node.getFile().length() + "";
+                            String pathFile = pathCurrently;
+                            String typeFile = node.getFile().isFile() ? "File" : "Folder";
+                            String lastModified = node.getFile().lastModified() + "";
+
+                            MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile,
+                                    sizeFile);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         } else if (check == 1) {
             this.add(rename);
             this.add(delete);
@@ -146,10 +216,42 @@ public class PopUpMenu extends JPopupMenu {
                     }
                 }
             });
+            this.add(detail);
+            detail.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    try {
+                        if (type == "REMOTE") {
+                            FTPFileNode node = (FTPFileNode) FolderNode;
+
+                            String nameFile = node.getFTPFile().getName();
+                            String sizeFile = node.getFTPFile().getSize() + "";
+                            String pathFile = pathCurrently;
+                            String typeFile = node.getFTPFile().getType() == 0 ? "File" : "Folder";
+                            String lastModified = node.getFTPFile().getTimestamp().getTime() + "";
+
+                            MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile,
+                                    sizeFile);
+
+                        } else {
+                            SystemFileNode node = (SystemFileNode) FolderNode;
+
+                            String nameFile = node.getFile().getName();
+                            String sizeFile = node.getFile().length() + "";
+                            String pathFile = pathCurrently;
+                            String typeFile = node.getFile().isFile() ? "File" : "Folder";
+                            String lastModified = node.getFile().lastModified() + "";
+
+                            MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile,
+                                    sizeFile);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
 
         } else {
             this.add(createFolder);
-            this.add(upload);
 
             createFolder.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -163,51 +265,6 @@ public class PopUpMenu extends JPopupMenu {
                     }
                 }
             });
-
-            upload.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    String newName = JOptionPane.showInputDialog("Enter new name: ");
-                    try {
-                        MainUI.getInstance().client.uploadFile("D:\\" + newName, pathCurrently + "/" + newName);
-                        MainUI.getInstance().updateStatus("Upload successfully");
-                        MainUI.getInstance().updateRemotePanel();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
         }
-        this.add(detail);
-        detail.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                try {
-                    if (type == "REMOTE") {
-                        FTPFileNode node = (FTPFileNode) FolderNode;
-                        
-                        String nameFile = node.getFTPFile().getName();
-                        String sizeFile = node.getFTPFile().getSize() + "";
-                        String pathFile = pathCurrently;
-                        String typeFile = node.getFTPFile().getType() == 0 ? "File" : "Folder";
-                        String lastModified = node.getFTPFile().getTimestamp().getTime() + "";
-
-                        MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile, sizeFile);
-                        
-                    }
-                    else{
-                        SystemFileNode node = (SystemFileNode) FolderNode;
-                        
-                        String nameFile = node.getFile().getName();
-                        String sizeFile = node.getFile().length() + "";
-                        String pathFile = pathCurrently;
-                        String typeFile = node.getFile().isFile() ? "File" : "Folder";
-                        String lastModified = node.getFile().lastModified() + "";
-
-                        MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile, sizeFile);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
     }
 }

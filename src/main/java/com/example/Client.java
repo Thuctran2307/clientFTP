@@ -4,6 +4,8 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
+import com.example.Views.Progress;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -23,14 +25,18 @@ public class Client {
         this.user = user;
         this.pass = pass;
         this.ftpClient = new FTPClient();
+
+        this.ftpClient.setBufferSize(2048);
     }
 
-    public void  connect() throws IOException {
+    public void connect() throws IOException {
         ftpClient.connect(server, port);
         ftpClient.login(user, pass);
         ftpClient.enterLocalPassiveMode();
         ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
         ftpClient.setFileType(FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE);
+        ftpClient.setFileTransferMode(FTP.BINARY_FILE_TYPE);
+
     }
 
     public void disconnect() throws IOException {
@@ -38,23 +44,28 @@ public class Client {
     }
 
     public ArrayList<FTPFile> listFiles(String path) throws IOException {
-        return  new ArrayList<FTPFile>(Arrays.asList(ftpClient.listFiles(path)));
+        return new ArrayList<FTPFile>(Arrays.asList(ftpClient.listFiles(path)));
     }
 
     public ArrayList<FTPFile> listFolders(String path) throws IOException {
-        return  new ArrayList<FTPFile>(Arrays.asList(ftpClient.listDirectories(path)));
+        return new ArrayList<FTPFile>(Arrays.asList(ftpClient.listDirectories(path)));
     }
 
     public void uploadFile(String localFilePath, String remoteFilePath) throws IOException {
         File localFile = new File(localFilePath);
         FileInputStream inputStream = new FileInputStream(localFile);
+        ftpClient.setCopyStreamListener(new Progress((int) localFile.length()));
         ftpClient.storeFile(remoteFilePath, inputStream);
+        
         inputStream.close();
     }
 
     public void downloadFile(String localFilePath, String remoteFilePath) throws IOException {
+
         File localFile = new File(localFilePath);
+        ftpClient.setCopyStreamListener(new Progress((int) localFile.length()));
         ftpClient.retrieveFile(remoteFilePath, new java.io.FileOutputStream(localFile));
+
     }
 
     public void deleteFile(String remoteFilePath) throws IOException {
