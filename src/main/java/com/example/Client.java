@@ -18,6 +18,7 @@ public class Client {
     private int port;
     private String user;
     private String pass;
+    public boolean isAvailable = true;
 
     public Client(String server, int port, String user, String pass) {
         this.server = server;
@@ -51,50 +52,94 @@ public class Client {
         return new ArrayList<FTPFile>(Arrays.asList(ftpClient.listDirectories(path)));
     }
 
-    public void uploadFile(String localFilePath, String remoteFilePath) throws IOException {
+    public boolean uploadFile(String localFilePath, String remoteFilePath) throws IOException {
         File localFile = new File(localFilePath);
         FileInputStream inputStream = new FileInputStream(localFile);
         ftpClient.setCopyStreamListener(new Progress((int) localFile.length()));
-        ftpClient.storeFile(remoteFilePath, inputStream);
-        
-        inputStream.close();
+        isAvailable = false;
+        if (ftpClient.storeFile(remoteFilePath, inputStream)) {
+            inputStream.close();
+            isAvailable = true;
+            return true;
+        }
+        return false;
     }
 
-    public void downloadFile(String localFilePath, String remoteFilePath) throws IOException {
+    public boolean downloadFile(String localFilePath, String remoteFilePath, int SizeFile) throws IOException {
 
         File localFile = new File(localFilePath);
-        ftpClient.setCopyStreamListener(new Progress((int) localFile.length()));
-        ftpClient.retrieveFile(remoteFilePath, new java.io.FileOutputStream(localFile));
-
+        ftpClient.setCopyStreamListener(new Progress((int) SizeFile));
+        isAvailable = false;
+        if (ftpClient.retrieveFile(remoteFilePath, new java.io.FileOutputStream(localFile))) {
+            isAvailable = true;
+            return true;
+        }
+        return false;
     }
 
-    public void deleteFile(String remoteFilePath) throws IOException {
-        ftpClient.deleteFile(remoteFilePath);
+    public boolean deleteFile(String remoteFilePath) {
+        try {
+            return ftpClient.deleteFile(remoteFilePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-
-    public void createFolder(String remoteDirPath) throws IOException {
-        ftpClient.makeDirectory(remoteDirPath);
+    
+    public boolean createFolder(String remoteDirPath) {
+        try {
+            return ftpClient.makeDirectory(remoteDirPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-
-    public void deleteFolder(String remoteDirPath) throws IOException {
-        ftpClient.removeDirectory(remoteDirPath);
+    
+    public boolean deleteFolder(String remoteDirPath) {
+        try {
+            return ftpClient.removeDirectory(remoteDirPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-
-    public void renameFile(String from, String to) throws IOException {
-        ftpClient.rename(from, to);
+    
+    public boolean renameFile(String from, String to) {
+        try {
+            return ftpClient.rename(from, to);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-
-    public void renameFolder(String from, String to) throws IOException {
-        ftpClient.rename(from, to);
+    
+    public boolean renameFolder(String from, String to) {
+        try {
+            return ftpClient.rename(from, to);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-
-    public void moveFile(String from, String to) throws IOException {
-        ftpClient.rename(from, to);
+    
+    public boolean moveFile(String from, String to) {
+        try {
+            return ftpClient.rename(from, to);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
-
-    public void moveFolder(String from, String to) throws IOException {
-        ftpClient.rename(from, to);
+    
+    public boolean moveFolder(String from, String to) {
+        try {
+            return ftpClient.rename(from, to);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
+    
 
     // get directory of current working directory
     public String getWorkingDirectory() throws IOException {

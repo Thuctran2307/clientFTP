@@ -14,6 +14,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -51,7 +52,7 @@ public class MainUI extends JFrame {
     JTextField txtPort;
     JTextField txtUser;
     JTextField txtPass;
-    JTextField txtPath;
+    JPasswordField txtPath;
     JButton btnConnect;
     JButton btnGo;
     JButton btnBack;
@@ -81,7 +82,7 @@ public class MainUI extends JFrame {
     void initUI() {
 
         this.setTitle("Main UI");
-        this.setSize(1080, 900);
+        this.setSize(1080, 950);
         this.setResizable(false);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
@@ -97,7 +98,7 @@ public class MainUI extends JFrame {
         lbUser = new JLabel("User");
         txtUser = new JTextField(10);
         lbPass = new JLabel("Pass");
-        txtPass = new JTextField(10);
+        txtPass = new JPasswordField(10);
         btnConnect = new JButton("Connect");
 
         // Thêm các thành phần vào headerPanel
@@ -318,8 +319,8 @@ public class MainUI extends JFrame {
 
     public void addProgressBar() {
         detailsPanel.removeAll();
-        detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.X_AXIS));
-        detailsPanel.add(progressBar);
+        detailsPanel.setLayout(new BorderLayout());
+        detailsPanel.add(progressBar, BorderLayout.CENTER);
         detailsPanel.revalidate();
         detailsPanel.repaint();
     }

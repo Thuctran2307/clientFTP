@@ -35,8 +35,9 @@ public class ProgressBar extends JPanel {
         add(lbType);
         add(this.type);
 
-        add(this.size);
         add(lbSize);
+        add(this.size);
+        
     }
 
     public void updateProgress(int percent) {

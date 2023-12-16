@@ -34,27 +34,35 @@ public class PopUpMenu extends JPopupMenu {
                                 @Override
                                 public void run() {
                                     try {
-                                        String size = ((FTPFileNode) FolderNode).getFTPFile().getSize() + "";
-                                        MainUI.getInstance().progressBar = new ProgressBar(
-                                                FolderNode.getUserObject().toString(), "Download", size);
-                                        MainUI.getInstance().client.downloadFile(
-                                                "D:\\" + FolderNode.getUserObject().toString(),
-                                                pathCurrently);
-                                        MainUI.getInstance()
-                                                .updateStatus("Download successfully, file saved in: " + "D:\\"
-                                                        + FolderNode.getUserObject().toString());
-                                        
+                                        if (MainUI.getInstance().client.isAvailable) {
+                                            String size = ((FTPFileNode) FolderNode).getFTPFile().getSize() + "";
+                                            String message = null;
+                                            String pathToSave = JOptionPane.showInputDialog("Enter path to download: ");
+                                            if (pathToSave == null || pathToSave.equals("")) {
+                                                return;
+                                            }
+                                            MainUI.getInstance().progressBar = new ProgressBar(
+                                                    FolderNode.getUserObject().toString(), "Download", size);
+                                            if (MainUI.getInstance().client.downloadFile(
+                                                    pathToSave + "\\" + FolderNode.getUserObject().toString(),
+                                                    pathCurrently, Integer.parseInt(size))) {
+                                                message = "Download successfully, file saved in: " + pathToSave + "\\"
+                                                        + FolderNode.getUserObject().toString();
+                                            } else {
+                                                message = "Download failed";
+                                            }
+                                            MainUI.getInstance().updateStatus(message);
+                                        } else {
+                                            MainUI.getInstance().updateStatus(
+                                                    "The action cannot be performed because there is an ongoing process.");
+                                        }
                                     } catch (Exception e) {
-                                        e.printStackTrace();
+                                        MainUI.getInstance().updateStatus("Something went wrong!");
                                     }
                                 }
                             });
                             executor.shutdown();
-                            // MainUI.getInstance().client.downloadFile("D:\\" + FolderNode.getUserObject().toString(),
-                            //         pathCurrently);
-                            // MainUI.getInstance().updateStatus("Download successfully, file saved in: " + "D:\\"
-                            //         + FolderNode.getUserObject().toString());
-                            // MainUI.getInstance().updateLocalPanel();
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -65,8 +73,13 @@ public class PopUpMenu extends JPopupMenu {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         String newName = JOptionPane.showInputDialog("Enter new name: ");
                         try {
-                            MainUI.getInstance().client.renameFile(pathCurrently, newName);
-                            MainUI.getInstance().updateStatus("Rename successfully");
+                            if (MainUI.getInstance().client.renameFile(pathCurrently, newName)) {
+                                MainUI.getInstance().updateStatus("Rename successfully");
+                                MainUI.getInstance().updateRemotePanel();
+                            } else {
+                                MainUI.getInstance().updateStatus("Rename failed");
+
+                            }
                             FolderNode.setUserObject(newName);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -77,8 +90,13 @@ public class PopUpMenu extends JPopupMenu {
                 delete.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         try {
-                            MainUI.getInstance().client.deleteFile(pathCurrently);
-                            MainUI.getInstance().updateStatus("Delete successfully");
+                            String message = null;
+                            if (MainUI.getInstance().client.deleteFile(pathCurrently)) {
+                                message = "Delete successfully";
+                            } else {
+                                message = "Delete failed";
+                            }
+                            MainUI.getInstance().updateStatus(message);
                             MainUI.getInstance().updateRemotePanel();
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -97,16 +115,26 @@ public class PopUpMenu extends JPopupMenu {
                                 @Override
                                 public void run() {
                                     try {
-                                        String size = ((SystemFileNode) FolderNode).getFile().length() + "";
-                                        MainUI.getInstance().progressBar = new ProgressBar(
-                                                FolderNode.getUserObject().toString(), "Upload", size);
-                                        MainUI.getInstance().client.uploadFile(pathCurrently,
-                                                pathToSave + "\\" + FolderNode.getUserObject().toString());
-                                        MainUI.getInstance().updateStatus("Upload successfully to " + pathToSave + "\\"
-                                                + FolderNode.getUserObject().toString());
-                                        MainUI.getInstance().updateRemotePanel();
+                                        if (MainUI.getInstance().client.isAvailable) {
+                                            String size = ((SystemFileNode) FolderNode).getFile().length() + "";
+                                            String message = null;
+                                            MainUI.getInstance().progressBar = new ProgressBar(
+                                                    FolderNode.getUserObject().toString(), "Upload", size);
+
+                                            if (MainUI.getInstance().client.uploadFile(pathCurrently,
+                                                    pathToSave + "\\" + FolderNode.getUserObject().toString())) {
+                                                message = "Upload successfully, file saved in: " + pathToSave + "\\"
+                                                        + FolderNode.getUserObject().toString();
+                                            } else {
+                                                message = "Upload failed";
+                                            }
+                                            MainUI.getInstance().updateStatus(message);
+                                        }
+                                        else {
+                                            MainUI.getInstance().updateStatus("The action cannot be performed because there is an ongoing process.");
+                                        }
                                     } catch (Exception e) {
-                                        e.printStackTrace();
+                                        MainUI.getInstance().updateStatus("Something went wrong!");
                                     }
                                 }
                             });
@@ -184,9 +212,13 @@ public class PopUpMenu extends JPopupMenu {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     String newName = JOptionPane.showInputDialog("Enter new name: ");
                     try {
-                        MainUI.getInstance().client.renameFolder(pathCurrently, newName);
-                        MainUI.getInstance().updateStatus("Rename successfully");
-                        MainUI.getInstance().updateRemotePanel();
+                        if (MainUI.getInstance().client.renameFolder(pathCurrently, newName)) {
+                            MainUI.getInstance().updateStatus("Rename successfully");
+                            MainUI.getInstance().updateRemotePanel();
+                        } else {
+                            MainUI.getInstance().updateStatus("Rename failed");
+
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -196,9 +228,13 @@ public class PopUpMenu extends JPopupMenu {
             delete.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     try {
-                        MainUI.getInstance().client.deleteFile(pathCurrently);
-                        MainUI.getInstance().updateStatus("Delete successfully");
-                        MainUI.getInstance().updateRemotePanel();
+                        if (MainUI.getInstance().client.deleteFolder(pathCurrently)) {
+                            MainUI.getInstance().updateStatus("Delete successfully");
+                            MainUI.getInstance().updateRemotePanel();
+                        } else {
+                            MainUI.getInstance().updateStatus("Delete failed");
+
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -208,9 +244,12 @@ public class PopUpMenu extends JPopupMenu {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     String newName = JOptionPane.showInputDialog("Enter new name: ");
                     try {
-                        MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName);
-                        MainUI.getInstance().updateStatus("Create successfully");
-                        MainUI.getInstance().updateRemotePanel();
+                        if (MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName)) {
+                            MainUI.getInstance().updateStatus("Create successfully");
+                            MainUI.getInstance().updateRemotePanel();
+                        } else {
+                            MainUI.getInstance().updateStatus("Create failed");
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -257,9 +296,12 @@ public class PopUpMenu extends JPopupMenu {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     String newName = JOptionPane.showInputDialog("Enter new name: ");
                     try {
-                        MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName);
-                        MainUI.getInstance().updateStatus("Create successfully");
-                        MainUI.getInstance().updateRemotePanel();
+                        if (MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName)) {
+                            MainUI.getInstance().updateStatus("Create successfully");
+                            MainUI.getInstance().updateRemotePanel();
+                        } else {
+                            MainUI.getInstance().updateStatus("Create failed");
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
