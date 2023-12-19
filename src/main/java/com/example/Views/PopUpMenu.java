@@ -52,6 +52,7 @@ public class PopUpMenu extends JPopupMenu {
                                                 message = "Download failed";
                                             }
                                             MainUI.getInstance().updateStatus(message);
+                                            MainUI.getInstance().updateLocalPanel();
                                         } else {
                                             MainUI.getInstance().updateStatus(
                                                     "The action cannot be performed because there is an ongoing process.");
@@ -129,9 +130,10 @@ public class PopUpMenu extends JPopupMenu {
                                                 message = "Upload failed";
                                             }
                                             MainUI.getInstance().updateStatus(message);
-                                        }
-                                        else {
-                                            MainUI.getInstance().updateStatus("The action cannot be performed because there is an ongoing process.");
+                                            MainUI.getInstance().updateRemotePanel();
+                                        } else {
+                                            MainUI.getInstance().updateStatus(
+                                                    "The action cannot be performed because there is an ongoing process.");
                                         }
                                     } catch (Exception e) {
                                         MainUI.getInstance().updateStatus("Something went wrong!");
@@ -162,8 +164,8 @@ public class PopUpMenu extends JPopupMenu {
                 delete.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         try {
-                            // FileHandler.getInstance().deleteFolder(MainUI.getInstance().client
-                            // pathCurrently);
+                            FileHandler.getInstance().deleteFolder(pathCurrently);
+                            MainUI.getInstance().updateLocalPanel();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -291,17 +293,23 @@ public class PopUpMenu extends JPopupMenu {
 
         } else {
             this.add(createFolder);
-
             createFolder.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     String newName = JOptionPane.showInputDialog("Enter new name: ");
                     try {
-                        if (MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName)) {
-                            MainUI.getInstance().updateStatus("Create successfully");
-                            MainUI.getInstance().updateRemotePanel();
-                        } else {
-                            MainUI.getInstance().updateStatus("Create failed");
+                        if (type == "REMOTE") {
+                            if (MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName)) {
+                                MainUI.getInstance().updateStatus("Create successfully");
+                                MainUI.getInstance().updateRemotePanel();
+                            } else {
+                                MainUI.getInstance().updateStatus("Create failed");
+                            }
                         }
+                        else{
+                            FileHandler.getInstance().createFolder(pathCurrently + "\\" + newName);
+                            MainUI.getInstance().updateLocalPanel();
+                        }
+                        
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
