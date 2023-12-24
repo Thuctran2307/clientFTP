@@ -6,7 +6,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import com.example.FileHandler;
 
 public class PopUpMenu extends JPopupMenu {
@@ -52,11 +51,12 @@ public class PopUpMenu extends JPopupMenu {
                                                 message = "Download failed";
                                             }
                                             MainUI.getInstance().updateStatus(message);
-                                            MainUI.getInstance().updateLocalPanel();
+
                                         } else {
                                             MainUI.getInstance().updateStatus(
                                                     "The action cannot be performed because there is an ongoing process.");
                                         }
+                                        
                                     } catch (Exception e) {
                                         MainUI.getInstance().updateStatus("Something went wrong!");
                                     }

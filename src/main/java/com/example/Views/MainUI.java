@@ -41,8 +41,8 @@ public class MainUI extends JFrame {
     JPanel statusPanel;
     JPanel detailsPanel;
 
-    JTree localTree;
-    JTree remoteTree;
+    public JTree localTree;
+    public JTree remoteTree;
 
     JLabel lbHost;
     JLabel lbPort;
@@ -217,14 +217,14 @@ public class MainUI extends JFrame {
             // create right click event show popup menu
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    TreePath path = remoteTree.getPathForLocation(e.getX(), e.getY());
-                    remoteTree.setSelectionPath(path);
+                    TreePath treepath = remoteTree.getPathForLocation(e.getX(), e.getY());
+                    remoteTree.setSelectionPath(treepath);
                     PopUpMenu popupMenu = null;
-                    if (path != null) {
+                    if (treepath != null) {
 
-                        FTPFileNode node = (FTPFileNode) path.getLastPathComponent();
+                        FTPFileNode node = (FTPFileNode) treepath.getLastPathComponent();
 
-                        String a = getPath(path.toString());
+                        String a = getPathFromTreePath(treepath);
                         if (node.getFTPFile().isFile()) {
                             popupMenu = new PopUpMenu(node, a, "REMOTE", 0);
                         } else if (node.getFTPFile().isDirectory()) {
@@ -246,7 +246,7 @@ public class MainUI extends JFrame {
     }
 
     public void updateLocalPanel() {
-        localPanel.removeAll();
+        
         DefaultMutableTreeNode rootLocal = new DefaultMutableTreeNode();
         File[] roots = File.listRoots();
 
@@ -267,12 +267,13 @@ public class MainUI extends JFrame {
             // create right click event show popup menu
             public void mousePressed(MouseEvent e) {
                 if (SwingUtilities.isRightMouseButton(e)) {
-                    TreePath path = localTree.getPathForLocation(e.getX(), e.getY());
-                    localTree.setSelectionPath(path);
+                    TreePath treepath = localTree.getPathForLocation(e.getX(), e.getY());
+                    localTree.setSelectionPath(treepath);
                     PopUpMenu popupMenu = null;
-                    if (path != null) {
+                    
+                    if (treepath != null) {
 
-                        SystemFileNode node = (SystemFileNode) path.getLastPathComponent();
+                        SystemFileNode node = (SystemFileNode) treepath.getLastPathComponent();
 
                         if (node.getFile().isFile()) {
                             popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 0);
@@ -285,34 +286,39 @@ public class MainUI extends JFrame {
                     localTree.setComponentPopupMenu(popupMenu);
                 } else if (e.getClickCount() == 2) {
                     TreePath path = localTree.getPathForLocation(e.getX(), e.getY());
-
                     if (path != null) {
                         DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-                        File rootFile = new File(getPath(path.toString()));
+                        node.removeAllChildren();
+                        File rootFile = new File(getPathFromTreePath(path));
                         addFilesToNode(rootFile, node);
+                        localTree.updateUI();
                     }
                 }
+
             }
         });
     }
 
-    String getPath(String path) {
-        String str = path;
-        String result = str.replaceAll("[\\[\\]]", "");
-        String[] array = result.split(", ");
-        return String.join("\\", array);
+    public String getPathFromTreePath(TreePath TreePath) {
+        StringBuilder sb = new StringBuilder();
+        Object[] nodes = TreePath.getPath();
+        for (int i = 0; i < nodes.length; i++) {
+            sb.append(File.separatorChar).append(nodes[i].toString());
+        }
+        return sb.toString();
     }
 
-    public void updateDetailsPanel(String Name, String path, String lastModified, String type, String size) throws IOException {
+    public void updateDetailsPanel(String Name, String path, String lastModified, String type, String size)
+            throws IOException {
         detailsPanel.removeAll();
         detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.X_AXIS));
-    
+
         addLabelToPanel("<html><font color='blue'>Name:</font> " + Name + "</html>", detailsPanel);
         addLabelToPanel("<html><font color='green'>Path:</font> " + path + "</html>", detailsPanel);
         addLabelToPanel("<html><font color='red'>Last Modified:</font> " + lastModified + "</html>", detailsPanel);
         addLabelToPanel("<html><font color='orange'>Type:</font> " + type + "</html>", detailsPanel);
         addLabelToPanel("<html><font color='purple'>Size:</font> " + size + "B" + "</html>", detailsPanel);
-    
+
         detailsPanel.revalidate();
         detailsPanel.repaint();
     }
@@ -326,15 +332,14 @@ public class MainUI extends JFrame {
     }
 
     public void updateProgress() {
-        
+
     }
-    
+
     private void addLabelToPanel(String labelText, JPanel panel) {
         JLabel label = new JLabel(labelText);
         label.setAlignmentY(Component.TOP_ALIGNMENT);
         panel.add(label);
         panel.add(Box.createRigidArea(new Dimension(30, 0))); // Khoảng cách giữa các nhãn
     }
-    
 
 }
