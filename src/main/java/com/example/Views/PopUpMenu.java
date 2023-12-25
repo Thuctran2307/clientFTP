@@ -56,7 +56,7 @@ public class PopUpMenu extends JPopupMenu {
                                             MainUI.getInstance().updateStatus(
                                                     "The action cannot be performed because there is an ongoing process.");
                                         }
-                                        
+
                                     } catch (Exception e) {
                                         MainUI.getInstance().updateStatus("Something went wrong!");
                                     }
@@ -111,6 +111,9 @@ public class PopUpMenu extends JPopupMenu {
                 upload.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         String pathToSave = JOptionPane.showInputDialog("Enter path to upload: ");
+                        if (pathToSave == null || pathToSave.equals("")) {
+                            return;
+                        }
                         try {
                             executor.submit(new Runnable() {
                                 @Override
@@ -210,53 +213,88 @@ public class PopUpMenu extends JPopupMenu {
             this.add(delete);
             this.add(createFolder);
 
-            rename.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    String newName = JOptionPane.showInputDialog("Enter new name: ");
-                    try {
-                        if (MainUI.getInstance().client.renameFolder(pathCurrently, newName)) {
-                            MainUI.getInstance().updateStatus("Rename successfully");
-                            MainUI.getInstance().updateRemotePanel();
-                        } else {
-                            MainUI.getInstance().updateStatus("Rename failed");
+            if (type == "REMOTE") {
+                rename.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        String newName = JOptionPane.showInputDialog("Enter new name: ");
+                        try {
+                            if (MainUI.getInstance().client.renameFolder(pathCurrently, newName)) {
+                                MainUI.getInstance().updateStatus("Rename successfully");
+                                MainUI.getInstance().updateRemotePanel();
+                            } else {
+                                MainUI.getInstance().updateStatus("Rename failed");
 
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                }
-            });
+                });
 
-            delete.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    try {
-                        if (MainUI.getInstance().client.deleteFolder(pathCurrently)) {
-                            MainUI.getInstance().updateStatus("Delete successfully");
-                            MainUI.getInstance().updateRemotePanel();
-                        } else {
-                            MainUI.getInstance().updateStatus("Delete failed");
+                delete.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        try {
+                            if (MainUI.getInstance().client.deleteFolder(pathCurrently)) {
+                                MainUI.getInstance().updateStatus("Delete successfully");
+                                MainUI.getInstance().updateRemotePanel();
+                            } else {
+                                MainUI.getInstance().updateStatus("Delete failed");
 
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                }
-            });
-            createFolder.addActionListener(new java.awt.event.ActionListener() {
-                public void actionPerformed(java.awt.event.ActionEvent evt) {
-                    String newName = JOptionPane.showInputDialog("Enter new name: ");
-                    try {
-                        if (MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName)) {
-                            MainUI.getInstance().updateStatus("Create successfully");
-                            MainUI.getInstance().updateRemotePanel();
-                        } else {
-                            MainUI.getInstance().updateStatus("Create failed");
+                });
+                createFolder.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        String newName = JOptionPane.showInputDialog("Enter new name: ");
+                        try {
+                            if (MainUI.getInstance().client.createFolder(pathCurrently + "/" + newName)) {
+                                MainUI.getInstance().updateStatus("Create successfully");
+                                MainUI.getInstance().updateRemotePanel();
+                            } else {
+                                MainUI.getInstance().updateStatus("Create failed");
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                }
-            });
+                });
+            } else {
+                rename.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        String newName = JOptionPane.showInputDialog("Enter new name: ");
+                        try {
+                            FileHandler.getInstance().renameFile(pathCurrently, newName,
+                                    FolderNode.getUserObject().toString());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
+                delete.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        try {
+                            FileHandler.getInstance().deleteFolder(pathCurrently);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
+                createFolder.addActionListener(new java.awt.event.ActionListener() {
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        String newName = JOptionPane.showInputDialog("Enter new name: ");
+                        try {
+                            FileHandler.getInstance().createFolder(pathCurrently + "\\" + newName);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
             this.add(detail);
             detail.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -293,6 +331,7 @@ public class PopUpMenu extends JPopupMenu {
 
         } else {
             this.add(createFolder);
+
             createFolder.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     String newName = JOptionPane.showInputDialog("Enter new name: ");
@@ -304,12 +343,15 @@ public class PopUpMenu extends JPopupMenu {
                             } else {
                                 MainUI.getInstance().updateStatus("Create failed");
                             }
-                        }
-                        else{
+                        } else {
+                            if (pathCurrently.equals("")) {
+                                MainUI.getInstance().updateStatus("Create folder in local failed because path is null");
+                                return;
+                            }
                             FileHandler.getInstance().createFolder(pathCurrently + "\\" + newName);
                             MainUI.getInstance().updateLocalPanel();
                         }
-                        
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

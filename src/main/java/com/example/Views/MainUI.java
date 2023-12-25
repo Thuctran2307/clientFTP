@@ -266,22 +266,20 @@ public class MainUI extends JFrame {
         localTree.addMouseListener(new MouseAdapter() {
             // create right click event show popup menu
             public void mousePressed(MouseEvent e) {
-                if (SwingUtilities.isRightMouseButton(e)) {
+                try {
+                    if (SwingUtilities.isRightMouseButton(e)) {
                     TreePath treepath = localTree.getPathForLocation(e.getX(), e.getY());
                     localTree.setSelectionPath(treepath);
                     PopUpMenu popupMenu = null;
                     
-                    if (treepath != null) {
+                    if (treepath != null ) {
 
                         SystemFileNode node = (SystemFileNode) treepath.getLastPathComponent();
-
                         if (node.getFile().isFile()) {
                             popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 0);
                         } else if (node.getFile().isDirectory()) {
                             popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 1);
                         }
-                    } else {
-                        popupMenu = new PopUpMenu(null, "", "LOCAL", 3);
                     }
                     localTree.setComponentPopupMenu(popupMenu);
                 } else if (e.getClickCount() == 2) {
@@ -293,6 +291,8 @@ public class MainUI extends JFrame {
                         addFilesToNode(rootFile, node);
                         localTree.updateUI();
                     }
+                }
+                } catch (Exception e1) {
                 }
 
             }

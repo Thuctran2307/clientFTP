@@ -61,6 +61,7 @@ public class FileHandler {
     }
 
     public boolean createFolder(String folderPath) {
+        System.out.println(folderPath);
         File folder = new File(folderPath);
 
         if (!folder.exists()) {

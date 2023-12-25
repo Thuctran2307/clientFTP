@@ -97,12 +97,31 @@ public class Client {
     
     public boolean deleteFolder(String remoteDirPath) {
         try {
+            FTPFile[] subFiles = ftpClient.listFiles(remoteDirPath); // Lấy danh sách các tệp và thư mục trong thư mục gốc
+            if (subFiles != null && subFiles.length > 0) {
+                for (FTPFile aFile : subFiles) {
+                    String currentFileName = aFile.getName();
+                    if (currentFileName.equals(".") || currentFileName.equals("..")) {
+                        continue; // Bỏ qua thư mục hiện tại (.) và thư mục cha (..)
+                    }
+                    String filePath = remoteDirPath + "/" + currentFileName;
+                    if (aFile.isDirectory()) {
+                        // Nếu là thư mục, gọi đệ quy để xoá thư mục con
+                        deleteFolder(filePath);
+                    } else {
+                        // Nếu là tệp, xoá tệp
+                        ftpClient.deleteFile(filePath);
+                    }
+                }
+            }
+            // Sau khi xoá tất cả các thư mục con và tệp trong thư mục gốc, xoá thư mục gốc
             return ftpClient.removeDirectory(remoteDirPath);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
     }
+    
     
     public boolean renameFile(String from, String to) {
         try {
@@ -140,8 +159,6 @@ public class Client {
         }
     }
     
-
-    // get directory of current working directory
     public String getWorkingDirectory() throws IOException {
         return ftpClient.printWorkingDirectory();
     }
