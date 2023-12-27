@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
+import javax.swing.JOptionPane;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -28,6 +29,8 @@ import org.apache.commons.net.ftp.FTPFile;
 import java.awt.event.*;
 
 import com.example.Client;
+import com.example.HelperFunction.FTPFileNode;
+import com.example.HelperFunction.SystemFileNode;
 
 public class MainUI extends JFrame {
 
@@ -76,7 +79,7 @@ public class MainUI extends JFrame {
 
     private MainUI() {
         initUI();
-        initEvent();
+        initClient();
     }
 
     void initUI() {
@@ -116,6 +119,7 @@ public class MainUI extends JFrame {
         // Tạo statusPanel và scrollPane
         statusPanel = new JPanel(new BorderLayout()); // Sử dụng BorderLayout cho statusPanel
         txtStatus = new JTextArea(10, 80);
+        txtStatus.setEditable(false);
         scrollPaneStatus = new JScrollPane(txtStatus);
         statusPanel.setPreferredSize(statusSize);
         scrollPaneStatus.setPreferredSize(statusSize);
@@ -148,7 +152,7 @@ public class MainUI extends JFrame {
         this.setVisible(true);
     }
 
-    void initEvent() {
+    void initClient() {
         btnConnect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -157,16 +161,28 @@ public class MainUI extends JFrame {
                 String user = txtUser.getText();
                 String pass = txtPass.getText();
 
-                client = new Client(host, Integer.parseInt(port), user, pass);
+                if (host.isEmpty() || port.isEmpty() || user.isEmpty() || pass.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Please fill all fields");
+                    return;
+                }
+
                 try {
+                    client = new Client(host, Integer.parseInt(port), user, pass);
                     client.connect();
                     updateStatus("Connected to server...");
-                    updateRemotePanel();
-                    updateStatus("Listed files in root directory...");
-                    localTree.updateUI();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                    if (client.login()) {
+                        updateRemotePanel();
+                        updateStatus("Login Success! Listed files in root directory...");
+                        localTree.updateUI();
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(null, "Login failed");
+                    }
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, "Can't connect to server");
                 }
+
             }
         });
     }
@@ -246,7 +262,7 @@ public class MainUI extends JFrame {
     }
 
     public void updateLocalPanel() {
-        
+
         DefaultMutableTreeNode rootLocal = new DefaultMutableTreeNode();
         File[] roots = File.listRoots();
 
@@ -268,30 +284,30 @@ public class MainUI extends JFrame {
             public void mousePressed(MouseEvent e) {
                 try {
                     if (SwingUtilities.isRightMouseButton(e)) {
-                    TreePath treepath = localTree.getPathForLocation(e.getX(), e.getY());
-                    localTree.setSelectionPath(treepath);
-                    PopUpMenu popupMenu = null;
-                    
-                    if (treepath != null ) {
+                        TreePath treepath = localTree.getPathForLocation(e.getX(), e.getY());
+                        localTree.setSelectionPath(treepath);
+                        PopUpMenu popupMenu = null;
 
-                        SystemFileNode node = (SystemFileNode) treepath.getLastPathComponent();
-                        if (node.getFile().isFile()) {
-                            popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 0);
-                        } else if (node.getFile().isDirectory()) {
-                            popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 1);
+                        if (treepath != null) {
+
+                            SystemFileNode node = (SystemFileNode) treepath.getLastPathComponent();
+                            if (node.getFile().isFile()) {
+                                popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 0);
+                            } else if (node.getFile().isDirectory()) {
+                                popupMenu = new PopUpMenu(node, node.getFile().getAbsolutePath(), "LOCAL", 1);
+                            }
+                        }
+                        localTree.setComponentPopupMenu(popupMenu);
+                    } else if (e.getClickCount() == 2) {
+                        TreePath path = localTree.getPathForLocation(e.getX(), e.getY());
+                        if (path != null) {
+                            DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+                            node.removeAllChildren();
+                            File rootFile = new File(getPathFromTreePath(path));
+                            addFilesToNode(rootFile, node);
+                            localTree.updateUI();
                         }
                     }
-                    localTree.setComponentPopupMenu(popupMenu);
-                } else if (e.getClickCount() == 2) {
-                    TreePath path = localTree.getPathForLocation(e.getX(), e.getY());
-                    if (path != null) {
-                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-                        node.removeAllChildren();
-                        File rootFile = new File(getPathFromTreePath(path));
-                        addFilesToNode(rootFile, node);
-                        localTree.updateUI();
-                    }
-                }
                 } catch (Exception e1) {
                 }
 
@@ -317,7 +333,7 @@ public class MainUI extends JFrame {
         addLabelToPanel("<html><font color='green'>Path:</font> " + path + "</html>", detailsPanel);
         addLabelToPanel("<html><font color='red'>Last Modified:</font> " + lastModified + "</html>", detailsPanel);
         addLabelToPanel("<html><font color='orange'>Type:</font> " + type + "</html>", detailsPanel);
-        addLabelToPanel("<html><font color='purple'>Size:</font> " + size + "B" + "</html>", detailsPanel);
+        addLabelToPanel("<html><font color='purple'>Size:</font> " + size + "KB" + "</html>", detailsPanel);
 
         detailsPanel.revalidate();
         detailsPanel.repaint();
@@ -329,10 +345,6 @@ public class MainUI extends JFrame {
         detailsPanel.add(progressBar, BorderLayout.CENTER);
         detailsPanel.revalidate();
         detailsPanel.repaint();
-    }
-
-    public void updateProgress() {
-
     }
 
     private void addLabelToPanel(String labelText, JPanel panel) {

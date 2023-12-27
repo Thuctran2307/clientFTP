@@ -32,12 +32,19 @@ public class Client {
 
     public void connect() throws IOException {
         ftpClient.connect(server, port);
-        ftpClient.login(user, pass);
-        ftpClient.enterLocalPassiveMode();
-        ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-        ftpClient.setFileType(FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE);
-        ftpClient.setFileTransferMode(FTP.BINARY_FILE_TYPE);
+        
+    }
 
+    public boolean login() throws IOException {
+        if(ftpClient.login(user, pass)) {
+            ftpClient.enterLocalPassiveMode();
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            ftpClient.setBufferSize(16384);
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE, FTP.BINARY_FILE_TYPE);
+            ftpClient.setFileTransferMode(FTP.BINARY_FILE_TYPE);
+            return true;
+        }
+        return false;
     }
 
     public void disconnect() throws IOException {

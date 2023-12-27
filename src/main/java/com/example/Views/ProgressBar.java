@@ -7,7 +7,7 @@ import java.awt.*;
 public class ProgressBar extends JPanel {
 
     private JProgressBar progressBar = new JProgressBar();
-    private JLabel lbProgress = new JLabel("Progress: ");
+    public JLabel lbProgress = new JLabel("Progress: ");
     private JLabel lbFileName = new JLabel("File Name: ");
     private JLabel lbType = new JLabel("Type: ");
     private JLabel lbSize = new JLabel("Size: ");
@@ -42,7 +42,6 @@ public class ProgressBar extends JPanel {
 
     public void updateProgress(int percent) {
         progressBar.setValue(percent);
-        System.out.println("Progress: " + percent);
     }
 }
 

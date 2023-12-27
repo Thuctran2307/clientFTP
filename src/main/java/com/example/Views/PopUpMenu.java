@@ -4,10 +4,15 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import com.example.HelperFunction.FTPFileNode;
+import com.example.HelperFunction.FileHandler;
+import com.example.HelperFunction.SystemFileNode;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import com.example.FileHandler;
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
 public class PopUpMenu extends JPopupMenu {
     private final ExecutorService executor = Executors.newFixedThreadPool(1); // Số lượng luồng
     JMenuItem download, rename, delete, upload, createFolder, detail;
@@ -41,7 +46,7 @@ public class PopUpMenu extends JPopupMenu {
                                                 return;
                                             }
                                             MainUI.getInstance().progressBar = new ProgressBar(
-                                                    FolderNode.getUserObject().toString(), "Download", size);
+                                                    FolderNode.getUserObject().toString(), "Download",  Integer.parseInt(size)/1024  + " KB");
                                             if (MainUI.getInstance().client.downloadFile(
                                                     pathToSave + "\\" + FolderNode.getUserObject().toString(),
                                                     pathCurrently, Integer.parseInt(size))) {
@@ -123,7 +128,7 @@ public class PopUpMenu extends JPopupMenu {
                                             String size = ((SystemFileNode) FolderNode).getFile().length() + "";
                                             String message = null;
                                             MainUI.getInstance().progressBar = new ProgressBar(
-                                                    FolderNode.getUserObject().toString(), "Upload", size);
+                                                    FolderNode.getUserObject().toString(), "Upload", Integer.parseInt(size)/1024  + " KB");
 
                                             if (MainUI.getInstance().client.uploadFile(pathCurrently,
                                                     pathToSave + "\\" + FolderNode.getUserObject().toString())) {
@@ -153,6 +158,9 @@ public class PopUpMenu extends JPopupMenu {
                 rename.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         String newName = JOptionPane.showInputDialog("Enter new name: ");
+                        if (newName == null || newName.equals("")) {
+                            return;
+                        }
                         try {
                             System.out.println(pathCurrently);
                             FileHandler.getInstance().renameFile(pathCurrently, newName,
@@ -183,7 +191,7 @@ public class PopUpMenu extends JPopupMenu {
                             FTPFileNode node = (FTPFileNode) FolderNode;
 
                             String nameFile = node.getFTPFile().getName();
-                            String sizeFile = node.getFTPFile().getSize() + "";
+                            String sizeFile = node.getFTPFile().getSize()/1024 + "";
                             String pathFile = pathCurrently;
                             String typeFile = node.getFTPFile().getType() == 0 ? "File" : "Folder";
                             String lastModified = node.getFTPFile().getTimestamp().getTime() + "";
@@ -195,10 +203,15 @@ public class PopUpMenu extends JPopupMenu {
                             SystemFileNode node = (SystemFileNode) FolderNode;
 
                             String nameFile = node.getFile().getName();
-                            String sizeFile = node.getFile().length() + "";
+                            String sizeFile = node.getFile().length()/1024 + "";
                             String pathFile = pathCurrently;
                             String typeFile = node.getFile().isFile() ? "File" : "Folder";
-                            String lastModified = node.getFile().lastModified() + "";
+
+                            Date lastModifiedDate = new Date(node.getFile().lastModified());
+
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                            String formattedDate = dateFormat.format(lastModifiedDate);
+                            String lastModified = formattedDate;
 
                             MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile,
                                     sizeFile);
@@ -217,6 +230,9 @@ public class PopUpMenu extends JPopupMenu {
                 rename.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         String newName = JOptionPane.showInputDialog("Enter new name: ");
+                        if(newName == null || newName.equals("")){
+                            return;
+                        }
                         try {
                             if (MainUI.getInstance().client.renameFolder(pathCurrently, newName)) {
                                 MainUI.getInstance().updateStatus("Rename successfully");
@@ -265,6 +281,9 @@ public class PopUpMenu extends JPopupMenu {
                 rename.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         String newName = JOptionPane.showInputDialog("Enter new name: ");
+                        if (newName == null || newName.equals("")) {
+                            return;
+                        }
                         try {
                             FileHandler.getInstance().renameFile(pathCurrently, newName,
                                     FolderNode.getUserObject().toString());
@@ -303,7 +322,7 @@ public class PopUpMenu extends JPopupMenu {
                             FTPFileNode node = (FTPFileNode) FolderNode;
 
                             String nameFile = node.getFTPFile().getName();
-                            String sizeFile = node.getFTPFile().getSize() + "";
+                            String sizeFile = node.getFTPFile().getSize()/1024 + "";
                             String pathFile = pathCurrently;
                             String typeFile = node.getFTPFile().getType() == 0 ? "File" : "Folder";
                             String lastModified = node.getFTPFile().getTimestamp().getTime() + "";
@@ -315,7 +334,7 @@ public class PopUpMenu extends JPopupMenu {
                             SystemFileNode node = (SystemFileNode) FolderNode;
 
                             String nameFile = node.getFile().getName();
-                            String sizeFile = node.getFile().length() + "";
+                            String sizeFile = node.getFile().length()/1024 + "";
                             String pathFile = pathCurrently;
                             String typeFile = node.getFile().isFile() ? "File" : "Folder";
                             String lastModified = node.getFile().lastModified() + "";

@@ -1,4 +1,4 @@
-package com.example;
+package com.example.HelperFunction;
 
 import java.io.File;
 import java.io.IOException;

@@ -2,6 +2,10 @@ package com.example.Views;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeCellRenderer;
+
+import com.example.HelperFunction.FTPFileNode;
+import com.example.HelperFunction.SystemFileNode;
+
 import java.awt.*;
 import java.io.File;
 
