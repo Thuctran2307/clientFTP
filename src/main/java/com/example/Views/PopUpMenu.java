@@ -109,7 +109,7 @@ public class PopUpMenu extends JPopupMenu {
                         }
                     }
                 });
-            } else {
+            } else if(type == "LOCAL"){
                 this.add(upload);
                 this.add(rename);
                 this.add(delete);
@@ -175,8 +175,13 @@ public class PopUpMenu extends JPopupMenu {
                 delete.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         try {
-                            FileHandler.getInstance().deleteFolder(pathCurrently);
-                            MainUI.getInstance().updateLocalPanel();
+                            SystemFileNode node = (SystemFileNode) FolderNode;
+                            if(node.getFile().isFile()){
+                                FileHandler.getInstance().deleteFile(pathCurrently);
+                            }
+                            else if(node.getFile().isDirectory()){
+                                FileHandler.getInstance().deleteFolder(pathCurrently);
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -277,7 +282,7 @@ public class PopUpMenu extends JPopupMenu {
                         }
                     }
                 });
-            } else {
+            } else if(type == "LOCAL") {
                 rename.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         String newName = JOptionPane.showInputDialog("Enter new name: ");
@@ -296,7 +301,13 @@ public class PopUpMenu extends JPopupMenu {
                 delete.addActionListener(new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
                         try {
-                            FileHandler.getInstance().deleteFolder(pathCurrently);
+                            SystemFileNode node = (SystemFileNode) FolderNode;
+                            if(node.getFile().isFile()){
+                                FileHandler.getInstance().deleteFile(pathCurrently);
+                            }
+                            else if(node.getFile().isDirectory()){
+                                FileHandler.getInstance().deleteFolder(pathCurrently);
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -330,7 +341,7 @@ public class PopUpMenu extends JPopupMenu {
                             MainUI.getInstance().updateDetailsPanel(nameFile, pathFile, lastModified, typeFile,
                                     sizeFile);
 
-                        } else {
+                        } else if(type == "LOCAL") {
                             SystemFileNode node = (SystemFileNode) FolderNode;
 
                             String nameFile = node.getFile().getName();

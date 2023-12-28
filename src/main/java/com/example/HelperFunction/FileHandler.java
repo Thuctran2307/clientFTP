@@ -94,5 +94,20 @@ public class FileHandler {
             return false;
         }
     }
+
+    public boolean deleteFile(String filePath) {
+        Path path = Paths.get(filePath);
+    
+        try {
+            Files.delete(path);
+            System.out.println("File deleted: " + filePath);
+            return true;
+        } catch (IOException e) {
+            System.out.println("Failed to delete file.");
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
 }
 
