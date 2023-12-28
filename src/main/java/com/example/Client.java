@@ -169,4 +169,9 @@ public class Client {
     public String getWorkingDirectory() throws IOException {
         return ftpClient.printWorkingDirectory();
     }
+
+    // set home directory
+    public void setHomeDirectory(String path) throws IOException {
+        ftpClient.changeWorkingDirectory(path);
+    }
 }

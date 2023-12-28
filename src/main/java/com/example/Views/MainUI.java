@@ -203,7 +203,7 @@ public class MainUI extends JFrame {
 
     private void addFilesToNode(DefaultMutableTreeNode root, String filePath) {
 
-        String path = filePath + "\\" + root.getUserObject().toString();
+        String path = filePath;
         try {
             for (FTPFile file : client.listFiles(path)) {
 
@@ -211,9 +211,9 @@ public class MainUI extends JFrame {
 
                 root.add(child);
 
-                if (file.isDirectory()) {
-                    addFilesToNode(child, path);
-                }
+                // if (file.isDirectory()) {
+                //     addFilesToNode(child, path);
+                // }
             }
 
         } catch (IOException e) {
@@ -250,6 +250,16 @@ public class MainUI extends JFrame {
                         popupMenu = new PopUpMenu(null, "", "REMOTE", 3);
                     }
                     remoteTree.setComponentPopupMenu(popupMenu);
+                }
+                else if(e.getClickCount() == 2){
+                    TreePath path = remoteTree.getPathForLocation(e.getX(), e.getY());
+                    if (path != null) {
+                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+                        node.removeAllChildren();
+                        String pathString = getPathFromTreePath(path);
+                        addFilesToNode(node, pathString);
+                        remoteTree.updateUI();
+                    }
                 }
             }
         });
