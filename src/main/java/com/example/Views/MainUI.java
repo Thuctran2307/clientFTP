@@ -210,10 +210,6 @@ public class MainUI extends JFrame {
                 FTPFileNode child = new FTPFileNode(file);
 
                 root.add(child);
-
-                // if (file.isDirectory()) {
-                //     addFilesToNode(child, path);
-                // }
             }
 
         } catch (IOException e) {

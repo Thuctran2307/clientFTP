@@ -33,7 +33,7 @@ public class Progress implements CopyStreamListener {
                 timeUpdate += 1;
                 speedTransfer = (double)totalBytesTransferred / ((double)(timeTransfer)*1024);
                 System.out.println( totalBytesTransferred + "---" + timeTransfer);
-                if(timeUpdate > 1000){
+                if(timeUpdate > 200){
                     MainUI.getInstance().progressBar.lbProgress.setText("Speed: " + speedTransfer + " KB/s");
                     timeUpdate = 0;
                 }

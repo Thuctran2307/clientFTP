@@ -46,7 +46,7 @@ public class PopUpMenu extends JPopupMenu {
                                                 return;
                                             }
                                             MainUI.getInstance().progressBar = new ProgressBar(
-                                                    FolderNode.getUserObject().toString(), "Download",  Integer.parseInt(size)/1024  + " KB");
+                                                    FolderNode.getUserObject().toString(), "Download",  Long.parseLong(size)/1024  + " KB");
                                             if (MainUI.getInstance().client.downloadFile(
                                                     pathToSave + "\\" + FolderNode.getUserObject().toString(),
                                                     pathCurrently, Integer.parseInt(size))) {
@@ -54,6 +54,7 @@ public class PopUpMenu extends JPopupMenu {
                                                         + FolderNode.getUserObject().toString();
                                             } else {
                                                 message = "Download failed";
+                                                MainUI.getInstance().client.isAvailable = true;
                                             }
                                             MainUI.getInstance().updateStatus(message);
 
@@ -63,6 +64,8 @@ public class PopUpMenu extends JPopupMenu {
                                         }
 
                                     } catch (Exception e) {
+                                        System.out.println(e.getMessage());
+                                        MainUI.getInstance().client.isAvailable = true;
                                         MainUI.getInstance().updateStatus("Something went wrong!");
                                     }
                                 }
@@ -84,7 +87,6 @@ public class PopUpMenu extends JPopupMenu {
                                 MainUI.getInstance().updateRemotePanel();
                             } else {
                                 MainUI.getInstance().updateStatus("Rename failed");
-
                             }
                             FolderNode.setUserObject(newName);
                         } catch (Exception e) {
@@ -128,22 +130,22 @@ public class PopUpMenu extends JPopupMenu {
                                             String size = ((SystemFileNode) FolderNode).getFile().length() + "";
                                             String message = null;
                                             MainUI.getInstance().progressBar = new ProgressBar(
-                                                    FolderNode.getUserObject().toString(), "Upload", Integer.parseInt(size)/1024  + " KB");
+                                                    FolderNode.getUserObject().toString(), "Upload", Long.parseLong(size)/1024  + " KB");
 
-                                            if (MainUI.getInstance().client.uploadFile(pathCurrently,
-                                                    pathToSave + "\\" + FolderNode.getUserObject().toString())) {
-                                                message = "Upload successfully, file saved in: " + pathToSave + "\\"
-                                                        + FolderNode.getUserObject().toString();
+                                            if (MainUI.getInstance().client.uploadFile(pathCurrently, pathToSave + "\\" + FolderNode.getUserObject().toString())) {
+                                                    message = "Upload successfully, file saved in: " + pathToSave + "\\" + FolderNode.getUserObject().toString();
                                             } else {
                                                 message = "Upload failed";
+                                                MainUI.getInstance().client.isAvailable = true;
                                             }
                                             MainUI.getInstance().updateStatus(message);
-                                            MainUI.getInstance().updateRemotePanel();
                                         } else {
                                             MainUI.getInstance().updateStatus(
                                                     "The action cannot be performed because there is an ongoing process.");
                                         }
                                     } catch (Exception e) {
+                                        MainUI.getInstance().client.isAvailable = true;
+                                        System.out.println(e.getMessage());
                                         MainUI.getInstance().updateStatus("Something went wrong!");
                                     }
                                 }

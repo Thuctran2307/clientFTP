@@ -32,11 +32,11 @@ public class Client {
 
     public void connect() throws IOException {
         ftpClient.connect(server, port);
-        
+
     }
 
     public boolean login() throws IOException {
-        if(ftpClient.login(user, pass)) {
+        if (ftpClient.login(user, pass)) {
             ftpClient.enterLocalPassiveMode();
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
             ftpClient.setBufferSize(16384);
@@ -60,23 +60,35 @@ public class Client {
     }
 
     public boolean uploadFile(String localFilePath, String remoteFilePath) throws IOException {
+
+        System.out.println("Uploading file: " + localFilePath + " to " + remoteFilePath);
+        isAvailable = false;
         File localFile = new File(localFilePath);
         FileInputStream inputStream = new FileInputStream(localFile);
         ftpClient.setCopyStreamListener(new Progress((int) localFile.length()));
-        isAvailable = false;
-        if (ftpClient.storeFile(remoteFilePath, inputStream)) {
-            inputStream.close();
-            isAvailable = true;
-            return true;
+
+        try {
+            if (ftpClient.storeFile(remoteFilePath, inputStream)) {
+                inputStream.close();
+                isAvailable = true;
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e.getCause() != null) {
+                e.getCause().printStackTrace();
+            }
         }
+
         return false;
     }
 
     public boolean downloadFile(String localFilePath, String remoteFilePath, int SizeFile) throws IOException {
 
+        isAvailable = false;
         File localFile = new File(localFilePath);
         ftpClient.setCopyStreamListener(new Progress((int) SizeFile));
-        isAvailable = false;
+
         if (ftpClient.retrieveFile(remoteFilePath, new java.io.FileOutputStream(localFile))) {
             isAvailable = true;
             return true;
@@ -92,7 +104,7 @@ public class Client {
             return false;
         }
     }
-    
+
     public boolean createFolder(String remoteDirPath) {
         try {
             return ftpClient.makeDirectory(remoteDirPath);
@@ -101,10 +113,11 @@ public class Client {
             return false;
         }
     }
-    
+
     public boolean deleteFolder(String remoteDirPath) {
         try {
-            FTPFile[] subFiles = ftpClient.listFiles(remoteDirPath); // Lấy danh sách các tệp và thư mục trong thư mục gốc
+            FTPFile[] subFiles = ftpClient.listFiles(remoteDirPath); // Lấy danh sách các tệp và thư mục trong thư mục
+                                                                     // gốc
             if (subFiles != null && subFiles.length > 0) {
                 for (FTPFile aFile : subFiles) {
                     String currentFileName = aFile.getName();
@@ -128,26 +141,28 @@ public class Client {
             return false;
         }
     }
-    
-    
+
     public boolean renameFile(String from, String to) {
         try {
+            to = cutStringAfterLastBackslash(from) + "\\" + to;
+            System.out.println(from + " " + to);
             return ftpClient.rename(from, to);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
     }
-    
+
     public boolean renameFolder(String from, String to) {
         try {
+            System.out.println(from + " " + to);
             return ftpClient.rename(from, to);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
     }
-    
+
     public boolean moveFile(String from, String to) {
         try {
             return ftpClient.rename(from, to);
@@ -156,7 +171,7 @@ public class Client {
             return false;
         }
     }
-    
+
     public boolean moveFolder(String from, String to) {
         try {
             return ftpClient.rename(from, to);
@@ -165,7 +180,7 @@ public class Client {
             return false;
         }
     }
-    
+
     public String getWorkingDirectory() throws IOException {
         return ftpClient.printWorkingDirectory();
     }
@@ -173,5 +188,15 @@ public class Client {
     // set home directory
     public void setHomeDirectory(String path) throws IOException {
         ftpClient.changeWorkingDirectory(path);
+    }
+
+    static String cutStringAfterLastBackslash(String input) {
+        int lastIndex = input.lastIndexOf("\\");
+        if (lastIndex != -1) {
+            return input.substring(0, lastIndex);
+        } else {
+            // Trả về input ban đầu nếu không có ký tự `\`
+            return input;
+        }
     }
 }
