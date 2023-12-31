@@ -64,7 +64,7 @@ public class Client {
         isAvailable = false;
         File localFile = new File(localFilePath);
         FileInputStream inputStream = new FileInputStream(localFile);
-        ftpClient.setCopyStreamListener(new Progress((int) localFile.length()));
+        ftpClient.setCopyStreamListener(new Progress((long) localFile.length()/1024));
 
         if (ftpClient.storeFile(remoteFilePath, inputStream)) {
             inputStream.close();
@@ -75,11 +75,11 @@ public class Client {
         return false;
     }
 
-    public boolean downloadFile(String localFilePath, String remoteFilePath, int SizeFile) throws IOException {
+    public boolean downloadFile(String localFilePath, String remoteFilePath, long SizeFile) throws IOException {
 
         isAvailable = false;
         File localFile = new File(localFilePath);
-        ftpClient.setCopyStreamListener(new Progress((int) SizeFile));
+        ftpClient.setCopyStreamListener(new Progress((long) SizeFile/1024));
 
         if (ftpClient.retrieveFile(remoteFilePath, new java.io.FileOutputStream(localFile))) {
             isAvailable = true;

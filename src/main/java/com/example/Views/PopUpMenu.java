@@ -49,7 +49,7 @@ public class PopUpMenu extends JPopupMenu {
                                                     FolderNode.getUserObject().toString(), "Download",  Long.parseLong(size)/1024  + " KB");
                                             if (MainUI.getInstance().client.downloadFile(
                                                     pathToSave + "\\" + FolderNode.getUserObject().toString(),
-                                                    pathCurrently, Integer.parseInt(size))) {
+                                                    pathCurrently, Long.parseLong(size))) {
                                                 message = "Download successfully, file saved in: " + pathToSave + "\\"
                                                         + FolderNode.getUserObject().toString();
                                             } else {

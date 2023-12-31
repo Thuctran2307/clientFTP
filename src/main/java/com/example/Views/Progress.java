@@ -7,11 +7,11 @@ public class Progress implements CopyStreamListener {
 
     int timeUpdate = 1;
     private long time;
-    public long totalBytes;
+    public long totalKb;
     public double speedTransfer;
     public Progress(long totalBytesTransferred) {
         time = System.currentTimeMillis()/1000;
-        this.totalBytes = totalBytesTransferred;
+        this.totalKb = totalBytesTransferred;
     }
 
     @Override
@@ -25,8 +25,9 @@ public class Progress implements CopyStreamListener {
             
             MainUI.getInstance().addProgressBar();
             double byteTransfering = 0;
-            if (totalBytes > 0) {
-                byteTransfering = ((double) totalBytesTransferred / (double) totalBytes) * 100.0;
+            System.out.println(totalBytesTransferred);
+            if (totalKb > 0) {
+                byteTransfering = ((double) totalBytesTransferred / (double) (totalKb*1024)) * 100.0;
 
                 long currentTime = System.currentTimeMillis()/1000;
                 long timeTransfer = currentTime - time;
@@ -35,8 +36,7 @@ public class Progress implements CopyStreamListener {
                     timeTransfer = 1;
                 }
                 speedTransfer = (double)totalBytesTransferred / ((double)(timeTransfer)*1024);
-                System.out.println( totalBytesTransferred + "---" + timeTransfer);
-                if(timeUpdate > 200){
+                if(timeUpdate > 400){
                     MainUI.getInstance().progressBar.lbProgress.setText("Speed: " + speedTransfer + " KB/s");
                     timeUpdate = 1;
                 }
