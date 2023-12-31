@@ -61,23 +61,15 @@ public class Client {
 
     public boolean uploadFile(String localFilePath, String remoteFilePath) throws IOException {
 
-        System.out.println("Uploading file: " + localFilePath + " to " + remoteFilePath);
         isAvailable = false;
         File localFile = new File(localFilePath);
         FileInputStream inputStream = new FileInputStream(localFile);
         ftpClient.setCopyStreamListener(new Progress((int) localFile.length()));
 
-        try {
-            if (ftpClient.storeFile(remoteFilePath, inputStream)) {
-                inputStream.close();
-                isAvailable = true;
-                return true;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            if (e.getCause() != null) {
-                e.getCause().printStackTrace();
-            }
+        if (ftpClient.storeFile(remoteFilePath, inputStream)) {
+            inputStream.close();
+            isAvailable = true;
+            return true;
         }
 
         return false;

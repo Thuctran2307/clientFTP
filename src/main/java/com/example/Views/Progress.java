@@ -5,11 +5,11 @@ import org.apache.commons.net.io.CopyStreamListener;
 
 public class Progress implements CopyStreamListener {
 
-    int timeUpdate = 0;
+    int timeUpdate = 1;
     private long time;
-    public int totalBytes;
+    public long totalBytes;
     public double speedTransfer;
-    public Progress(int totalBytesTransferred) {
+    public Progress(long totalBytesTransferred) {
         time = System.currentTimeMillis()/1000;
         this.totalBytes = totalBytesTransferred;
     }
@@ -31,11 +31,14 @@ public class Progress implements CopyStreamListener {
                 long currentTime = System.currentTimeMillis()/1000;
                 long timeTransfer = currentTime - time;
                 timeUpdate += 1;
+                if(timeTransfer == 0){
+                    timeTransfer = 1;
+                }
                 speedTransfer = (double)totalBytesTransferred / ((double)(timeTransfer)*1024);
                 System.out.println( totalBytesTransferred + "---" + timeTransfer);
                 if(timeUpdate > 200){
                     MainUI.getInstance().progressBar.lbProgress.setText("Speed: " + speedTransfer + " KB/s");
-                    timeUpdate = 0;
+                    timeUpdate = 1;
                 }
             }
             MainUI.getInstance().progressBar.updateProgress((int) byteTransfering);
