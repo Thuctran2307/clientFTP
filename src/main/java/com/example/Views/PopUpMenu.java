@@ -167,7 +167,6 @@ public class PopUpMenu extends JPopupMenu {
                             System.out.println(pathCurrently);
                             FileHandler.getInstance().renameFile(pathCurrently, newName,
                                     FolderNode.getUserObject().toString());
-                            MainUI.getInstance().updateLocalPanel();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -381,7 +380,6 @@ public class PopUpMenu extends JPopupMenu {
                                 return;
                             }
                             FileHandler.getInstance().createFolder(pathCurrently + "\\" + newName);
-                            MainUI.getInstance().updateLocalPanel();
                         }
 
                     } catch (Exception e) {
